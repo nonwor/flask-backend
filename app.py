@@ -45,23 +45,26 @@ def hello_world():
 @app.route("/users/table", methods=["GET"])
 def getUsersAsCsv():
 	print("Getting users as csv", file=sys.stderr)
-	all_users = db.session.execute(db.select(users)).scalars()
-	data = []
-	for user in all_users:
-		data.append([user.id, user.username, user.email])
-	print(data, file=sys.stderr)
-	df = pd.DataFrame(data,columns=['id',"username","email"])
+	try:
+		all_users = db.session.execute(db.select(users)).scalars()
+		data = []
+		for user in all_users:
+			data.append([user.id, user.username, user.email])
+		print(data, file=sys.stderr)
+		df = pd.DataFrame(data,columns=['id',"username","email"])
 
-	csv_data = io.StringIO()
-	df.to_csv(csv_data, index=False)
-	response = app.response_class(
-		response = csv_data.getvalue(),
-		status=200,
-	)
+		csv_data = io.StringIO()
+		df.to_csv(csv_data, index=False)
+		response = app.response_class(
+			response = csv_data.getvalue(),
+			status=200,
+		)
 
-	print("ok", file=sys.stderr)
+		print("ok", file=sys.stderr)
 
-	return(response)
+		return(response)
+	except:
+		return("call failed", 400)
 
 #Create new user, or if a user exists we return some message and data
 @app.route("/user", methods=["POST", "GET"])
