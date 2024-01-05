@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, select
+import pandas as pd
+import io
 
 import sys
 
@@ -40,6 +42,26 @@ def hello_world():
 		return (json,200)
 
 #Get users as a CSV
+@app.route("/users/table", methods=["GET"])
+def getUsersAsCsv():
+	print("Getting users as csv", file=sys.stderr)
+	all_users = db.session.execute(db.select(users)).scalars()
+	data = []
+	for user in all_users:
+		data.append([user.id, user.username, user.email])
+	print(data, file=sys.stderr)
+	df = pd.DataFrame(data,columns=['id',"username","email"])
+
+	csv_data = io.StringIO()
+	df.to_csv(csv_data, index=False)
+	response = app.response_class(
+		response = csv_data.getvalue(),
+		status=200,
+	)
+
+	print("ok", file=sys.stderr)
+
+	return(response)
 
 #Create new user, or if a user exists we return some message and data
 @app.route("/user", methods=["POST", "GET"])
@@ -60,7 +82,8 @@ def showRouteInput():
 			return("Failed to add user", 400)
 	#We try to get the user ID here
 	if request.method == "GET":
-		# user = db.session.execute(db.select(users).order_by(users.username)).scalars()
+
+		#We can use query and filter to capture "lookup" data in DB.
 		user = users.query.filter((users.email == data["email"]) and (users.username == data["name"])).first()
 		print(user,file=sys.stderr)
 		if(user == None):
