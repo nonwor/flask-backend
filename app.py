@@ -42,21 +42,31 @@ def hello_world():
 #Get users as a CSV
 
 #Create new user, or if a user exists we return some message and data
-@app.route("/user", methods=["POST"])
+@app.route("/user", methods=["POST", "GET"])
 def showRouteInput():
 	# Handle API input process data according to specs
 	data = request.get_json()
-	print(data, file=sys.stderr)
-	user = users(
-		username=data["name"],
-		email=data["email"],
-	)
-	try:
-		db.session.add(user)
-		db.session.commit()
-		return("success", 200)
-	except:
-		return("Failed to add user", 400)
+	if request.method == "POST":
+		print(data, file=sys.stderr)
+		user = users(
+			username=data["name"],
+			email=data["email"],
+		)
+		try:
+			db.session.add(user)
+			db.session.commit()
+			return("success", 200)
+		except:
+			return("Failed to add user", 400)
+	#We try to get the user ID here
+	if request.method == "GET":
+		# user = db.session.execute(db.select(users).order_by(users.username)).scalars()
+		user = users.query.filter((users.email == data["email"]) and (users.username == data["name"])).first()
+		print(user,file=sys.stderr)
+		if(user == None):
+			return("Cannot find user", 200)
+		else:
+			print(user.id, user.username, user.email, file=sys.stderr)
+			return({"id":user.id, "username": user.username, "email":user.email}, 200)
 	
-	return("ok",200)
 
