@@ -4,8 +4,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, select
 import pandas as pd
 import io
-
 import sys
+
+from usermodel import users
 
 class Base(DeclarativeBase):
   pass
@@ -18,10 +19,10 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 db.init_app(app)
 
-class users(db.Model):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, nullable=False)
+# class users(db.Model):
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     username: Mapped[str] = mapped_column(String, nullable=False)
+#     email: Mapped[str] = mapped_column(String, nullable=False)
 
 with app.app_context():
     db.create_all()
@@ -64,6 +65,7 @@ def getUsersAsCsv():
 
 		return(response)
 	except:
+
 		return("call failed", 400)
 
 #Create new user, or if a user exists we return some message and data
