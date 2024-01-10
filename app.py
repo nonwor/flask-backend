@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, select
+from sqlalchemy import Integer, String, select, and_
 import pandas as pd
 import io
 import sys
@@ -71,7 +71,9 @@ def getUsersAsCsv():
 #Create new user, or if a user exists we return some message and data
 @app.route("/user", methods=["POST", "GET"])
 def showRouteInput():
+
 	# Handle API input process data according to specs
+	# This is to create new users
 	data = request.get_json()
 	if request.method == "POST":
 		print(data, file=sys.stderr)
@@ -85,16 +87,21 @@ def showRouteInput():
 			return("success", 200)
 		except:
 			return("Failed to add user", 400)
+
 	#We try to get the user ID here
 	if request.method == "GET":
 
 		#We can use query and filter to capture "lookup" data in DB.
-		user = users.query.filter((users.email == data["email"]) and (users.username == data["name"])).first()
-		print(user,file=sys.stderr)
-		if(user == None):
+		print("doing GET user here", file=sys.stderr)
+		# user = users.query.filter((users.email == data["email"]) and (users.username == data["name"])).first()
+		query = select(users).where(and_(users.username == data["name"], users.email == data["email"]))
+		result = db.session.execute(query).scalars().first()
+		print(result,file=sys.stderr)
+		
+		if(result == None):
 			return("Cannot find user", 200)
 		else:
-			print(user.id, user.username, user.email, file=sys.stderr)
-			return({"id":user.id, "username": user.username, "email":user.email}, 200)
+			print(result.id, result.username, result.email, file=sys.stderr)
+			return({"id":result.id, "username": result.username, "email":result.email}, 200)
 	
 
