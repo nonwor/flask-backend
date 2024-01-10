@@ -5,6 +5,7 @@ from sqlalchemy import Integer, String, select, and_
 import pandas as pd
 import io
 import sys
+import psutil
 
 from usermodel import users
 
@@ -97,11 +98,17 @@ def showRouteInput():
 		query = select(users).where(and_(users.username == data["name"], users.email == data["email"]))
 		result = db.session.execute(query).scalars().first()
 		print(result,file=sys.stderr)
-		
+
 		if(result == None):
 			return("Cannot find user", 200)
 		else:
 			print(result.id, result.username, result.email, file=sys.stderr)
 			return({"id":result.id, "username": result.username, "email":result.email}, 200)
-	
 
+@app.route("/util")
+def checkCpuMemUsage():
+	print("Checking Utilization", file=sys.stderr)
+	cpuUtil = psutil.cpu_percent()
+	memUtil = psutil.virtual_memory().percent
+	return({"CPU": cpuUtil,
+		 "MEM": memUtil})
